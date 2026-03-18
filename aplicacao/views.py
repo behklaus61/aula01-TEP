@@ -1,14 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from .models import Produto 
+from .models import Produto
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .form import UsuarioForm
 
 def index(request):
-    context = {'curso': 'Desenvolvimento de Sistemas'}
-    return render(request, 'index.html', context)
+    produtos = Produto.objects.all()
+    return render(request, 'index.html', {'produtos': produtos})
 
 def contato(request):
     context = {'curso': 'Desenvolvimento de Sistemas'}
@@ -42,7 +42,8 @@ def salvarProduto(request):
     return redirect('urlproduto')
 
 def editarProduto(request, id):
-    produto = Produto.objects.get(id=id)
+    produto = get_object_or_404(Produto, id=id)  
+    #Produto.objects.get(id=id)
 
     if request.method == "GET":
         context = {'p': produto}
@@ -63,39 +64,36 @@ def editarProduto(request, id):
         produto.save()
         return redirect('urlproduto')
 
-def excluirProduto(request , id):
+def excluirProduto(request, id):
     produto = get_object_or_404(Produto, id=id)
     produto.delete()
-    return redirect('urlproduto')   
+    return redirect('urlproduto')
 
 def entrar(request):
-
     if request.method == "GET":
         return render(request, "entrar.html")
     elif request.method == "POST":
         usuario = request.POST.get("txtUser")
         senha = request.POST.get("txtPass")
         user = authenticate(username=usuario, password=senha)
-        
+
         if user:
             login(request, user)
             return redirect('urlproduto')
-        messages.error(request, "Falha na autenticação")
-        return render (request, 'entrar.html')
-
+        messages.error(request, "Falha na autenticação!")    
+        return render(request, 'entrar.html')
 
 def sair(request):
     logout(request)
-    return redirect('urlentrar') 
+    return redirect('urlentrar')
 
 def cadastrarUsuario(request):
     if request.method == "GET":
-        form = usuarioForm()
-        context = {'form' : form}
-        return render(request, 'cadastrarUsuario.html', context)   
-    else: 
-        form = UsuarioForm(request.POST, request.FILES) 
-        if form.is_Valid():
+        form = UsuarioForm()
+        context = {'form': form}
+        return render(request, 'cadastrarUsuario.html', context)
+    else:
+        form = UsuarioForm(request.POST, request.FILES)
+        if form.is_valid():
             form.save()
-            returnredirect('urlentrar')      
-    
+            return redirect('urlentrar')
